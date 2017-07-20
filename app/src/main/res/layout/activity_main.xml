@@ -24,6 +24,12 @@
         android:text="Longtitude"
         android:id="@+id/textViewLong"/>
 
+    <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="350dp"></fragment>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -41,6 +47,7 @@
             android:id="@+id/btnStop"
             android:text="stop detector"/>
     </LinearLayout>
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

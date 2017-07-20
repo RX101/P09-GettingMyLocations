@@ -7,6 +7,7 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +23,15 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private GoogleApiClient mGoogleApiClient;
     private Location mLocation;
     String folderLocation;
+    private GoogleMap map;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,18 +59,44 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
          folderLocation = Environment.getExternalStorageDirectory()
                 .getAbsolutePath() + "/P09";
-//
-//        File folder = new File(folderLocation);
-//        if (folder.exists() == false){
-//            boolean result = folder.mkdir();
-//            if (result == true){
-//                Log.d("File Read/Write", "Folder created");
-//                Toast.makeText(MainActivity.this,"File Read/Write, Folder created",Toast.LENGTH_SHORT).show();
-//
-//            }else{
-//                Toast.makeText(MainActivity.this,"File Read/Write, Folder not created",Toast.LENGTH_SHORT).show();
-//            }
-//        }
+
+        FragmentManager fm = getSupportFragmentManager();
+        SupportMapFragment mapFragment = (SupportMapFragment)fm.findFragmentById(R.id.map);
+        mapFragment.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                map = googleMap;
+
+                UiSettings ui = map.getUiSettings();
+                ui.setCompassEnabled(true);
+                ui.setZoomControlsEnabled(true);
+
+                int permissionCheck = ContextCompat.checkSelfPermission(MainActivity.this,
+                        android.Manifest.permission.ACCESS_FINE_LOCATION);
+                int permissionCheck1 = ContextCompat.checkSelfPermission(MainActivity.this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+                if (permissionCheck != PermissionChecker.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},2);
+
+                }else if(permissionCheck1 != PermissionChecker.PERMISSION_GRANTED){
+                    ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+                } else{
+                    map.setMyLocationEnabled(true);
+                }
+
+
+                LatLng poi_current = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+                Marker current = map.addMarker(new
+                        MarkerOptions()
+                        .position(poi_current)
+                        .title("Current Location")
+                        .snippet("current location")
+                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher)));
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(poi_current,15));
+
+            }
+        });
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -101,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 Intent i = new Intent(MainActivity.this, MyService.class);
                 startService(i);
                 mGoogleApiClient.connect();
+
             }
         });
 
@@ -112,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 if(mGoogleApiClient.isConnected()){
                     mGoogleApiClient.disconnect();
                 }
+
 
             }
         });
@@ -181,20 +220,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onStart() {
         super.onStart();
+
     }
 
     @Override
     protected void onStop() {
         super.onStop();
 
+
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if(mGoogleApiClient.isConnected()) {
-            tvLat.setText("Latitude: " + mLocation.getLatitude());
-            tvLong.setText("Longtitude: " + mLocation.getLongitude());
-        }
-    }
 }
