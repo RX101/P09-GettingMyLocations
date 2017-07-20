@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -20,10 +21,14 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import java.io.File;
+import java.io.FileWriter;
+
 public class MyService extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     boolean started;
     private GoogleApiClient mGoogleApiClient;
     private Location mLocation;
+    String folderLocation;
     public MyService() {
     }
 
@@ -43,6 +48,21 @@ public class MyService extends Service implements GoogleApiClient.ConnectionCall
                 .addApi(LocationServices.API)
                 .build();
 
+        folderLocation = Environment.getExternalStorageDirectory()
+                .getAbsolutePath() + "/P09";
+
+        File folder = new File(folderLocation);
+        if (folder.exists() == false){
+            boolean result = folder.mkdir();
+            if (result == true){
+                Log.d("File Read/Write", "Folder created");
+                Toast.makeText(this,"File Read/Write, Folder created",Toast.LENGTH_SHORT).show();
+
+            }else{
+                Toast.makeText(this,"File Read/Write, Folder not created",Toast.LENGTH_SHORT).show();
+            }
+        }
+
     }
 
     @Override
@@ -53,8 +73,7 @@ public class MyService extends Service implements GoogleApiClient.ConnectionCall
             mGoogleApiClient.connect();
         }else{
             Log.d("Service","Still running");
-            Toast.makeText(getApplicationContext(),"Service, Still Running",Toast.LENGTH_SHORT).show();
-            mGoogleApiClient.connect();
+            Toast.makeText(this,"Service, Still running",Toast.LENGTH_SHORT).show();
         }
         return Service.START_STICKY;
     }
@@ -94,15 +113,13 @@ public class MyService extends Service implements GoogleApiClient.ConnectionCall
             Toast.makeText(this,
                     "Permission not granted to retrieve location info",
                     Toast.LENGTH_SHORT).show();
-//            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},2);
+//
         }
 
         if (mLocation != null) {
-//            tvLat.setText("Latitude: "+ mLocation.getLatitude());
-//            tvLong.setText("Longtitude: "+ mLocation.getLongitude());
-            Toast.makeText(this, "Lat : " + mLocation.getLatitude() +
-                            " Lng : " + mLocation.getLongitude(),
-                    Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this, "Lat : " + mLocation.getLatitude() +
+//                            " Lng : " + mLocation.getLongitude(),
+//                    Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Location not Detected",
                     Toast.LENGTH_SHORT).show();
@@ -113,10 +130,21 @@ public class MyService extends Service implements GoogleApiClient.ConnectionCall
     @Override
     public void onLocationChanged(Location location) {
         //the detected location is given by the variable location in the signature
-//        tvLat.setText("Latitude: "+ mLocation.getLatitude());
-//        tvLong.setText("Longtitude: "+ mLocation.getLongitude());
-        Toast.makeText(this, "Lat : " + location.getLatitude() + " Lng : " +
-                location.getLongitude(), Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "Lat : " + location.getLatitude() + " Lng : " +
+//                location.getLongitude(), Toast.LENGTH_SHORT).show();
+        File targetFile = new File(folderLocation, "data.txt");
+
+        try {
+            FileWriter writer = new FileWriter(targetFile, true);
+            writer.write(location.getLatitude() + ", " + location.getLongitude() +"\n");
+            writer.flush();
+            writer.close();
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to write!",
+                    Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+
     }
 
 
